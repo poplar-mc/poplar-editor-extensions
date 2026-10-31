@@ -1,6 +1,6 @@
 id = "poplar"
 name = "Poplar"
-description = "Syntax highlighting for the Poplar datapack language."
+description = "Syntax highlighting and the language server for the Poplar datapack language."
 version = "0.1.0"
 schema_version = 1
 authors = ["Poplar"]
@@ -8,4 +8,9 @@ authors = ["Poplar"]
 # `setup.sh` fills in the path and the commit of the local grammar repository.
 [grammars.poplar]
 repository = "file:///home/jordo/Projects/poplar/editors/tree-sitter-poplar"
-rev = "c4219bca9739df91900f1d5793b79b21d0d5b32c"
+rev = "54bf975d64e4b0b520070741515b7c5fa2fd0ee6"
+
+# Gram runs `poplar lsp`, which src/lib.rs finds on the PATH.
+[language_servers.poplar]
+name = "Poplar"
+languages = ["Poplar"]
