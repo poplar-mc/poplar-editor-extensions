@@ -17,11 +17,9 @@
   "import"
   "namespace"
   "execute"
-  "as"
   "with"
 ] @keyword
 
-(number_type) @type
 (compound_entry key: (identifier) @property)
 
 (function_definition name: (identifier) @function)
