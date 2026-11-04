@@ -1,3 +1,7 @@
 (function_definition
-  kind: _ @context
+  "mcfun" @context
   name: (identifier) @name) @item
+
+(data_file
+  type: (data_file_type) @context
+  name: (_) @name) @item

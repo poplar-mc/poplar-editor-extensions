@@ -5,10 +5,11 @@ version = "0.1.0"
 schema_version = 1
 authors = ["Poplar"]
 
-# `setup.sh` fills in the path and the commit of the local grammar repository.
+# The grammar lives in the poplar monorepo. `rev` must be a commit there that has the generated `src/parser.c`.
 [grammars.poplar]
-repository = "file:///home/jordo/Projects/poplar/editors/tree-sitter-poplar"
-rev = "54bf975d64e4b0b520070741515b7c5fa2fd0ee6"
+repository = "https://github.com/poplar-mc/poplar"
+path = "editors/tree-sitter-poplar"
+rev = "cf558d41b0f2a420435241f815bc4057f5c518ee"
 
 # Gram runs `poplar lsp`, which src/lib.rs finds on the PATH.
 [language_servers.poplar]
