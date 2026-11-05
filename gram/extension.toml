@@ -5,10 +5,10 @@ version = "0.5.0"
 schema_version = 1
 authors = ["Poplar"]
 
-# The grammar lives in the poplar monorepo. `rev` must be a commit there that has the generated `src/parser.c`.
+# The grammar is in this repo. `rev` must be a pushed commit that has the generated `tree-sitter-poplar/src/parser.c`.
 [grammars.poplar]
-repository = "https://github.com/poplar-mc/poplar"
-path = "editors/tree-sitter-poplar"
+repository = "https://github.com/poplar-mc/poplar-gram-extension"
+path = "tree-sitter-poplar"
 rev = "e11712e43b5951ec22f4e972d0c6eb803f2fa193"
 
 # Gram runs `poplar lsp`, which src/lib.rs finds on the PATH.
