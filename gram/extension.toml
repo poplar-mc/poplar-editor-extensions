@@ -9,7 +9,7 @@ authors = ["Poplar"]
 [grammars.poplar]
 repository = "https://github.com/poplar-mc/poplar-editor-extensions"
 path = "tree-sitter-poplar"
-rev = "8f72cd43acbc3809dbd40eaea7b9b54e23f6c1cd"
+rev = "e809ef601899f43e304634dec712c00413977fd0"
 
 # Gram runs `poplar lsp`, which src/lib.rs finds on the PATH.
 [language_servers.poplar]
