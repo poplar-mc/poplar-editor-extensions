@@ -1,13 +1,13 @@
 id = "poplar"
 name = "Poplar"
 description = "Syntax highlighting and the language server for the Poplar datapack language."
-version = "0.5.0"
+version = "0.5.1"
 schema_version = 1
 authors = ["Poplar"]
 
 # The grammar is in this repo. `rev` must be a pushed commit that has the generated `tree-sitter-poplar/src/parser.c`.
 [grammars.poplar]
-repository = "https://github.com/poplar-mc/poplar-gram-extension"
+repository = "https://github.com/poplar-mc/poplar-editor-extensions"
 path = "tree-sitter-poplar"
 rev = "8f72cd43acbc3809dbd40eaea7b9b54e23f6c1cd"
 

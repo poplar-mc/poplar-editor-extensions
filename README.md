@@ -1,25 +1,45 @@
-# Poplar for Gram
+# Poplar editor extensions
 
-The Gram (Zed) extension for [Poplar](https://github.com/poplar-mc/poplar), the language that compiles to Minecraft datapacks. It gives syntax highlighting, brackets, indents, an outline, and the Poplar language server (errors, hover, go to definition and completion).
+Editor support for [Poplar](https://github.com/poplar-mc/poplar), a language that compiles to Minecraft datapacks.
 
-## Install
+| Folder | What it is |
+|---|---|
+| `gram/` | The Gram (Zed) extension: syntax highlighting, brackets, indents, an outline, and the Poplar language server |
+| `tree-sitter-poplar/` | The Tree-sitter grammar |
+| `textmate/` | A TextMate grammar, used by the Poplar website |
 
-1. Install Poplar, so that `poplar` is on your PATH. On Linux and macOS:
+## Install the Gram extension
+
+Gram has no extension store, so you install the extension from a local copy of this repo.
+
+1. [Install Poplar](https://github.com/poplar-mc/poplar#install), so that `poplar` is on your `PATH`.
+2. Install [rustup](https://rustup.rs). Gram uses it to compile the extension.
+3. Clone this repo:
 
    ```sh
-   curl -fsSL https://raw.githubusercontent.com/poplar-mc/poplar/main/install.sh | sh
+   git clone https://github.com/poplar-mc/poplar-editor-extensions.git
    ```
 
-   On Windows and for other options, see [Install](https://github.com/poplar-mc/poplar#install).
+4. In Gram, open Extensions > Install Dev Extension and choose the `gram/` folder.
 
-2. In Gram, open Extensions > Install From URL and enter `https://github.com/poplar-mc/poplar-gram-extension`. Gram compiles the extension and the grammar to WebAssembly, so it needs [rustup](https://rustup.rs).
+To update, run `git pull` and install it again. Gram shows the version you have.
 
-## Development
+## Change the grammar
 
-- The grammar comes from the Poplar repo (`editors/tree-sitter-poplar`), at the commit `rev` in `extension.toml`. When the grammar changes, set `rev` to the new Poplar commit.
-- `languages/poplar/` has the queries: highlights, brackets, indents and outline.
-- `src/lib.rs` starts `poplar lsp` from the PATH.
-- To test local changes, use Install Dev Extension with this folder.
+Edit `tree-sitter-poplar/grammar.js`, then run `tree-sitter generate` in that folder. The generated parser in `src/` is committed, because editors compile it and don't generate it.
+
+Every Poplar file must parse. From `tree-sitter-poplar/`, with the Poplar repo next to this one:
+
+```sh
+tree-sitter parse -p . --quiet ../../poplar/tests/e2e/*/src/*.poplar ../../poplar/examples/*/src/*.poplar
+```
+
+`gram/extension.toml` fetches the grammar from this repo at the commit in `rev`, so a grammar change takes two commits:
+
+1. Commit and push the grammar.
+2. Set `rev` to that commit, set `version` in `gram/extension.toml` and `gram/Cargo.toml`, then commit and push.
+
+The highlight, bracket, indent and outline queries are in `gram/languages/poplar/`. `gram/src/lib.rs` starts `poplar lsp` from the `PATH`.
 
 ## License
 
