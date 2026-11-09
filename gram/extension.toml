@@ -1,7 +1,7 @@
 id = "poplar"
 name = "Poplar"
 description = "Syntax highlighting and the language server for the Poplar datapack language."
-version = "0.5.1"
+version = "0.7.0"
 schema_version = 1
 authors = ["Poplar"]
 
@@ -9,7 +9,7 @@ authors = ["Poplar"]
 [grammars.poplar]
 repository = "https://github.com/poplar-mc/poplar-editor-extensions"
 path = "tree-sitter-poplar"
-rev = "e809ef601899f43e304634dec712c00413977fd0"
+rev = "157a21a65811877eac53d6dd8590535f87d3db86"
 
 # Gram runs `poplar lsp`, which src/lib.rs finds on the PATH.
 [language_servers.poplar]
