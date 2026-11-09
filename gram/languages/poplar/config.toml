@@ -3,8 +3,13 @@ grammar = "poplar"
 path_suffixes = ["poplar"]
 line_comments = ["// "]
 tab_size = 4
+hard_tabs = false
+# A line that ends with the colon of a block indents the next line, and `elif` and `else` go back
+# one level.
+increase_indent_pattern = ":\\s*(//.*)?$"
+decrease_indent_pattern = "^\\s*(elif|else)\\b.*:"
 brackets = [
-    { start = "{", end = "}", close = true, newline = true },
+    { start = "{", end = "}", close = true, newline = false },
     { start = "(", end = ")", close = true, newline = false },
     { start = "[", end = "]", close = true, newline = false },
     { start = "\"", end = "\"", close = true, newline = false, not_in = ["string", "comment"] },

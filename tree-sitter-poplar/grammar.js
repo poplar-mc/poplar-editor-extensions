@@ -35,6 +35,10 @@ const BINARY_OPERATORS = [
 module.exports = grammar({
   name: 'poplar',
 
+  // The scanner (src/scanner.c) gives the end of a line, the start and end of an indented block,
+  // and the colon that starts a block. Inside brackets, a line break is only whitespace.
+  externals: $ => [$._newline, $._indent, $._dedent, $._block_colon],
+
   extras: $ => [/\s/, $.comment],
 
   word: $ => $.identifier,
@@ -47,26 +51,34 @@ module.exports = grammar({
 
     _declaration: $ => choice(
       $.import_declaration,
+      $.constant_declaration,
       $.variable_declaration,
       $.function_definition,
       $.data_file,
     ),
 
-    // `namespace combat;`, the first statement of a file.
-    namespace_declaration: $ => seq('namespace', field('name', $.namespace_name), ';'),
+    // `namespace combat`, the first statement of a file.
+    namespace_declaration: $ => seq('namespace', field('name', $.namespace_name), $._newline),
 
-    import_declaration: $ => seq('import', field('name', $.namespace_name), ';'),
+    import_declaration: $ => seq('import', field('name', $.namespace_name), $._newline),
+
+    // `const maxMana = 100`: a build-time value, only at the top level.
+    constant_declaration: $ => seq(
+      'const', field('name', $.identifier),
+      '=', field('value', $._expression), $._newline,
+    ),
 
     namespace_name: $ => seq($.identifier, repeat(seq('.', $.identifier))),
 
     // `magic:heal` or `bs.math:clamp`: a name in another namespace.
     qualified_name: $ => seq(field('namespace', $.namespace_name), ':', field('name', $.identifier)),
 
+    // `mcfun heal:` and its body, which can be empty.
     function_definition: $ => seq(
       'mcfun',
       field('name', $.identifier),
-      '(', ')',
-      field('body', $.block),
+      $._block_colon,
+      choice(field('body', $._body), $._newline),
     ),
 
     // `predicate isSneaking { ...json... }`: a JSON file in the pack. The compiler checks the type word.
@@ -74,6 +86,7 @@ module.exports = grammar({
       field('type', alias($.identifier, $.data_file_type)),
       field('name', choice($.identifier, $.string)),
       field('body', choice($.json_object, $.json_array)),
+      $._newline,
     ),
 
     json_object: $ => seq('{', commaSep($.json_pair), '}'),
@@ -82,75 +95,94 @@ module.exports = grammar({
     _json_value: $ => choice($.json_object, $.json_array, $.string, $.json_number, $.boolean, $.null),
     json_number: _ => /-?\d+(\.\d+)?([eE][+-]?\d+)?/,
 
-    block: $ => seq('{', repeat($._statement), '}'),
+    // After a `:`: the indented lines under it, or one simple statement on the same line.
+    _body: $ => choice($._simple_statement, seq($._newline, $.block)),
 
-    _statement: $ => choice(
+    block: $ => seq($._indent, repeat1($._statement), $._dedent),
+
+    _statement: $ => choice($._simple_statement, $._compound_statement),
+
+    _simple_statement: $ => choice(
       $.variable_declaration,
       $.assignment,
       $.return_statement,
       $.break_statement,
       $.continue_statement,
-      $.if_statement,
-      $.while_statement,
-      $.for_statement,
-      $.execute_statement,
       $.command,
       $.expression_statement,
     ),
 
-    variable_declaration: $ => seq(
-      'var', field('name', $._variable),
-      '=', field('value', $._expression), ';',
+    _compound_statement: $ => choice(
+      $.if_statement,
+      $.while_statement,
+      $.for_statement,
+      $.execute_statement,
     ),
 
-    assignment: $ => seq(field('target', $._variable), '=', field('value', $._expression), ';'),
+    variable_declaration: $ => seq(
+      'var', field('name', $._variable),
+      '=', field('value', $._expression), $._newline,
+    ),
 
-    return_statement: $ => seq('return', optional($._expression), ';'),
-    break_statement: _ => seq('break', ';'),
-    continue_statement: _ => seq('continue', ';'),
+    assignment: $ => seq(
+      field('target', $._variable), '=', field('value', $._expression), $._newline,
+    ),
+
+    return_statement: $ => seq('return', optional($._expression), $._newline),
+    break_statement: $ => seq('break', $._newline),
+    continue_statement: $ => seq('continue', $._newline),
 
     if_statement: $ => seq(
       'if',
-      field('condition', $.condition),
-      field('consequence', $.block),
-      optional(seq('else', field('alternative', choice($.block, $.if_statement)))),
+      field('condition', $._expression),
+      $._block_colon,
+      field('consequence', $._body),
+      repeat(field('alternative', $.elif_clause)),
+      optional(field('alternative', $.else_clause)),
     ),
 
-    while_statement: $ => seq('while', field('condition', $.condition), field('body', $.block)),
+    elif_clause: $ => seq('elif', field('condition', $._expression), $._block_colon, field('consequence', $._body)),
 
+    else_clause: $ => seq('else', $._block_colon, field('body', $._body)),
+
+    while_statement: $ => seq('while', field('condition', $._expression), $._block_colon, field('body', $._body)),
+
+    // `for n in 0..3:`. The end is not included.
     for_statement: $ => seq(
-      'for', '(', field('start', $._expression), '..', field('end', $._expression), ')',
-      '|', field('capture', $.identifier), '|',
-      field('body', $.block),
+      'for', field('capture', $.identifier), 'in',
+      field('start', $._expression), '..', field('end', $._expression),
+      $._block_colon, field('body', $._body),
     ),
 
-    condition: $ => seq('(', $._expression, ')'),
-
-    // `execute (as @a at @s) { ... }`. The subcommands are raw Minecraft text.
+    // `execute as @a at @s:`. The subcommands are raw Minecraft text, up to the colon that starts
+    // the body.
     execute_statement: $ => seq(
-      'execute', '(',
-      field('subcommands', repeat(choice($.insert, $.selector, $.macro_key, alias($._subcommand_text, $.command_text)))),
-      ')',
-      field('body', $.block),
+      'execute',
+      field('subcommands', repeat1(choice($.insert, $.selector, $.macro_key, alias($._subcommand_text, $.command_text)))),
+      $._block_colon,
+      field('body', $._body),
     ),
 
-    // `/give @p diamond {{count}};`. Everything after the name is raw Minecraft text.
+    // `/give @p diamond {{count}}`. Everything after the name is raw Minecraft text, to the end
+    // of the line, so a `//` there is text and not a comment.
     command: $ => seq(
       '/',
       field('name', $.command_name),
       repeat(choice($.insert, $.selector, $.macro_key, $.command_text)),
-      ';',
+      $._newline,
     ),
 
     command_name: _ => /[a-z_]+/,
 
-    command_text: _ => /[^\s;@{$]+|\{[^{;\s]*|\$/,
+    command_text: _ => token(prec(1, /[^\s@{$]+|\{[^{\s]*|\$/)),
 
-    _subcommand_text: _ => /[^\s;@{()$]+|\$/,
+    // A word of subcommand text. A colon inside it, as in `minecraft:the_nether`, is part of the
+    // word, and a colon at its end starts the body.
+    _subcommand_text: _ => /[^\s@{$:]+(:[^\s@{$:]+)*|\$/,
 
     insert: $ => seq('{{', $._expression, '}}'),
 
-    expression_statement: $ => seq($._expression, ';'),
+    expression_statement: $ => seq($._expression, $._newline),
 
     _variable: $ => choice($.identifier, $.qualified_name, $.score_variable, $.data_variable, $.entity_score, $.entity_data),
 
@@ -174,12 +206,13 @@ module.exports = grammar({
     // `$(name)`: a macro argument of the mcfun.
     macro_key: _ => token(prec(1, /\$\([A-Za-z_][A-Za-z0-9_]*\)/)),
 
-    // `block ~ ~-1 ~ stone` in a condition: an `execute if` subcommand as raw text, up to `and`, `or` or `)`.
+    // `block ~ ~-1 ~ stone` in a condition: an `execute if` subcommand as raw text, up to `and`,
+    // `or`, `)` or the colon that starts the body.
     minecraft_check: $ => prec.right(seq(
       field('kind', alias(/(biome|block|blocks|data|dimension|entity|function|items|loaded|predicate|score|slots|stopwatch)\s/, $.check_kind)),
       repeat1(choice($.insert, $.selector, $.macro_key, $.check_text)),
     )),
-    check_text: _ => /[^\s(){}@$]+|\{[^{\s)]*|\$/,
+    check_text: _ => /[^\s(){}@$:]+(:[^\s(){}@$:]+)*|\{[^{\s)]*|\$/,
 
     list_literal: $ => seq('[', commaSep($._expression), ']'),
     compound_literal: $ => seq('{', commaSep($.compound_entry), '}'),
@@ -205,8 +238,8 @@ module.exports = grammar({
       optional(seq('with', field('with', choice($.compound_literal, $.data_variable, $.entity_data, $.with_source)))),
     )),
 
-    // `entity @s` or `block ~ ~ ~` after `with`: raw Minecraft text to the `;`.
-    with_source: $ => seq(field('kind', choice('entity', 'block')), field('text', alias(/[^;]+/, $.with_text))),
+    // `entity @s` or `block ~ ~ ~` after `with`: raw Minecraft text to the end of the line.
+    with_source: $ => seq(field('kind', choice('entity', 'block')), field('text', alias(/[^\n]+/, $.with_text))),
 
     argument_list: $ => seq('(', commaSep($._expression), ')'),
 

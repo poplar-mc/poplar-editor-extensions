@@ -30,7 +30,7 @@
       "match": "//.*$"
     },
     "command": {
-      "begin": "(?:^|(?<=[{};]))\\s*(/)(?![/*])([a-z_]+)",
+      "begin": "(?:^|(?<=:\\s))\\s*(/)(?![/*])([a-z_]+)",
       "beginCaptures": {
         "1": {
           "name": "punctuation.definition.command.poplar"
@@ -39,12 +39,7 @@
           "name": "entity.name.function.command.poplar"
         }
       },
-      "end": ";",
-      "endCaptures": {
-        "0": {
-          "name": "punctuation.terminator.poplar"
-        }
-      },
+      "end": "$",
       "contentName": "string.unquoted.command.poplar",
       "patterns": [
         {
@@ -53,21 +48,13 @@
       ]
     },
     "execute": {
-      "begin": "\\b(execute)\\s*(\\()",
+      "begin": "\\b(execute)\\b",
       "beginCaptures": {
         "1": {
           "name": "keyword.control.execute.poplar"
-        },
-        "2": {
-          "name": "punctuation.section.parens.begin.poplar"
         }
       },
-      "end": "\\)",
-      "endCaptures": {
-        "0": {
-          "name": "punctuation.section.parens.end.poplar"
-        }
-      },
+      "end": "(?=:(?:\\s|$))",
       "contentName": "string.unquoted.command.poplar",
       "patterns": [
         {
@@ -194,25 +181,15 @@
       ]
     },
     "declaration": {
-      "begin": "\\b(mcfun)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*(\\()",
-      "beginCaptures": {
+      "match": "\\b(mcfun)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+      "captures": {
         "1": {
           "name": "storage.type.function.poplar"
         },
         "2": {
           "name": "entity.name.function.poplar"
-        },
-        "3": {
-          "name": "punctuation.section.parens.begin.poplar"
         }
-      },
-      "end": "\\)",
-      "endCaptures": {
-        "0": {
-          "name": "punctuation.section.parens.end.poplar"
-        }
-      },
-      "patterns": []
+      }
     },
     "expression": {
       "patterns": [
@@ -223,11 +200,14 @@
           "include": "#string"
         },
         {
+          "include": "#compound"
+        },
+        {
           "include": "#minecraft-check"
         },
         {
           "name": "storage.type.poplar",
-          "match": "\\b(mcfun|var)\\b"
+          "match": "\\b(mcfun|var|const)\\b"
         },
         {
           "name": "keyword.control.import.poplar",
@@ -235,11 +215,11 @@
         },
         {
           "name": "keyword.control.poplar",
-          "match": "\\b(if|else|for|while|return|break|continue|execute)\\b"
+          "match": "\\b(if|elif|else|for|in|while|return|break|continue|execute)\\b"
         },
         {
           "comment": "`with entity @s` and `with block ~ ~ ~` pass raw Minecraft text",
-          "match": "\\b(with)\\s+(entity|block)\\b([^;]*)",
+          "match": "\\b(with)\\s+(entity|block)\\b(.*)$",
           "captures": {
             "1": {
               "name": "keyword.operator.word.poplar"
@@ -261,7 +241,7 @@
           "match": "\\b(true|false|null)\\b"
         },
         {
-          "comment": "`magic` in `magic:heal()`, and the name in `namespace combat;` / `import magic;`",
+          "comment": "`magic` in `magic:heal()`, and the name in `namespace combat` / `import magic`",
           "name": "entity.name.namespace.poplar",
           "match": "\\b[a-z0-9_.]+(?=:[A-Za-z_])|(?<=\\bnamespace |\\bimport )[a-z0-9_.]+"
         },
@@ -274,7 +254,7 @@
           "match": "\\b[A-Za-z_][A-Za-z0-9_]*(?=\\s*\\()"
         },
         {
-          "match": "\\|\\s*([A-Za-z_][A-Za-z0-9_]*)\\s*\\|",
+          "match": "(?<=\\bfor\\s)\\s*([A-Za-z_][A-Za-z0-9_]*)(?=\\s+in\\b)",
           "captures": {
             "1": {
               "name": "variable.parameter.poplar"
@@ -296,20 +276,12 @@
           "match": "\\$(?:[a-z0-9_.]+:)?(?:\"[^\"]*\"|[A-Za-z_][A-Za-z0-9_]*)(?:\\.(?:\"[^\"]*\"|[A-Za-z_][A-Za-z0-9_]*)|\\[[^\\]]*\\])*"
         },
         {
-          "name": "variable.other.property.key.poplar",
-          "match": "\\b[A-Za-z_][A-Za-z0-9_]*(?=\\s*:)"
-        },
-        {
           "name": "constant.numeric.poplar",
           "match": "\\b\\d+(?:\\.\\d+)?[bBsSlLfFdD]?\\b"
         },
         {
           "name": "keyword.operator.poplar",
           "match": "==|!=|<=|>=|\\.\\.|[<>=+\\-*/%!]"
-        },
-        {
-          "name": "punctuation.terminator.poplar",
-          "match": ";"
         },
         {
           "name": "punctuation.separator.poplar",
@@ -333,14 +305,14 @@
       "match": "@[aeprsn](?:\\[(?:[^\\[\\]]|\\[[^\\]]*\\])*\\])?"
     },
     "minecraft-check": {
-      "comment": "`if (block ~ ~-1 ~ stone and ...)`: an `execute if` subcommand as raw text",
-      "begin": "(?<=[(!]|\\band |\\bor )\\s*\\b(biome|block|blocks|data|dimension|entity|function|items|loaded|predicate|score|slots|stopwatch)\\s+(?=[^\\s=<>!)+*/%.,;])",
+      "comment": "`if block ~ ~-1 ~ stone and ...:`: an `execute if` subcommand as raw text",
+      "begin": "(?<=[(!]|\\bif |\\belif |\\bwhile |\\band |\\bor )\\s*\\b(biome|block|blocks|data|dimension|entity|function|items|loaded|predicate|score|slots|stopwatch)\\s+(?=[^\\s=<>!)+*/%.,;:])",
       "beginCaptures": {
         "1": {
           "name": "support.function.check.poplar"
         }
       },
-      "end": "(?=\\s+(?:and|or)\\b|\\))",
+      "end": "(?=\\s+(?:and|or)\\b|\\)|:(?:\\s|$))",
       "contentName": "string.unquoted.check.poplar",
       "patterns": [
         {
@@ -358,6 +330,19 @@
       "comment": "`$(name)`: a macro argument of the mcfun",
       "name": "variable.parameter.poplar",
       "match": "\\$\\([A-Za-z_][A-Za-z0-9_]*\\)"
+    },
+    "compound": {
+      "begin": "\\{(?!\\{)",
+      "end": "\\}",
+      "patterns": [
+        {
+          "name": "variable.other.property.key.poplar",
+          "match": "\\b[A-Za-z_][A-Za-z0-9_]*(?=\\s*:)"
+        },
+        {
+          "include": "#expression"
+        }
+      ]
     }
   }
 }

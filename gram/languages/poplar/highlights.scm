@@ -7,9 +7,12 @@
 [
   "mcfun"
   "var"
+  "const"
   "if"
+  "elif"
   "else"
   "for"
+  "in"
   "while"
   "return"
   "break"
@@ -24,13 +27,14 @@
 
 (function_definition name: (identifier) @function)
 
-; `namespace combat;`, `import magic;` and the `magic` of `magic:heal()`.
+; `namespace combat`, `import magic` and the `magic` of `magic:heal()`.
 (namespace_name) @module
 (call_expression function: (qualified_name name: (identifier) @function))
 
 ; `predicate isSneaking { ... }`: the type word, the name and the JSON keys.
 (data_file type: (data_file_type) @keyword)
 (data_file name: (identifier) @constant)
+(constant_declaration name: (identifier) @constant)
 (json_pair key: (string) @property)
 (json_number) @number
 (call_expression function: (identifier) @function)
@@ -48,13 +52,13 @@
 (data_path) @property
 (selector) @tag
 
-; `/say ...;` and `execute (...)` hold raw Minecraft text.
+; `/say ...` and `execute ...:` hold raw Minecraft text.
 (command "/" @punctuation.special)
 (command name: (command_name) @function)
 (command_text) @string.special
 (insert ["{{" "}}"] @punctuation.special)
 
-; `if (block ~ ~-1 ~ stone)`: an `execute if` subcommand as raw text.
+; `if block ~ ~-1 ~ stone:`: an `execute if` subcommand as raw text.
 (minecraft_check kind: (check_kind) @function)
 (check_text) @string.special
 
@@ -62,5 +66,5 @@
 (unary_expression operator: _ @operator)
 ["=" ".."] @operator
 
-["(" ")" "{" "}" "[" "]" "|"] @punctuation.bracket
-[";" "," "."] @punctuation.delimiter
+["(" ")" "{" "}" "[" "]"] @punctuation.bracket
+["," "." ":"] @punctuation.delimiter

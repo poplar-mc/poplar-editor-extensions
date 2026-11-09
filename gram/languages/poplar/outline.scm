@@ -5,3 +5,7 @@
 (data_file
   type: (data_file_type) @context
   name: (_) @name) @item
+
+(constant_declaration
+  "const" @context
+  name: (identifier) @name) @item

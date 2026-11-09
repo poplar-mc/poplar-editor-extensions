@@ -1,2 +1,3 @@
-(block "}" @end) @indent
-(argument_list ")" @end) @indent
+(_ "[" "]" @end) @indent
+(_ "{" "}" @end) @indent
+(_ "(" ")" @end) @indent
